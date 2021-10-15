@@ -1,35 +1,26 @@
-﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
+﻿using AutoMapper.QueryableExtensions;
+using AutoMapperSample.OneToOneMapping.Dto;
+using AutoMapperSample.OneToOneMapping.ReadModel;
 
-var config = new MapperConfiguration(cfg =>
-{
-    cfg.CreateMap<Left, LeftResponseDto>();
-    cfg.CreateMap<Right, RightResponseDto>();
-    cfg.CreateMap<LeftRight, LeftRightResponseDto>();
-});
+Console.WriteLine("One to one mapping");
 
+var oneToOneLefts = AutoMapperSample.OneToOneMapping.Mocks.LeftEntityMock.GetLefts();
+var oneToOneRights = AutoMapperSample.OneToOneMapping.Mocks.RightEntityMock.GetRights();
 
-var lefts = new List<Left>()
-{
-    new Left(1, "Nima Title"),
-    new Left(2, "Shima Title")
-};
+var oneToOneAutoMapperConfig = AutoMapperSample.OneToOneMapping.Configurations.AutoMapperConfiguration.GetMapperConfiguration();
 
-var rights = new List<Right>()
-{
-    new Right(1, "Nima Name"),
-    new Right(2, "Shima Name")
-};
+var lambdaOneToOneResultResponseDto = oneToOneLefts.Join(oneToOneRights, l => l.Id, r => r.LeftId,
+    (l, r) => new LeftRight(l, r)).AsQueryable().ProjectTo<LeftRightResponseDto>(oneToOneAutoMapperConfig).ToList();
 
-var resultResponseDto = lefts.Join(rights, l => l.Id, r => r.LeftId, (l, r) => new LeftRight(l, r)).AsQueryable().ProjectTo<LeftRightResponseDto>(config).ToList();
-
-var linq =
-    (from l in lefts
-     join r in rights on l.Id equals r.LeftId
+var linqOneToOneResultResponeDto =
+    (from l in oneToOneLefts
+     join r in oneToOneRights on l.Id equals r.LeftId
      // where ..
-     select new LeftRight(l, r)).AsQueryable().ProjectTo<LeftRightResponseDto>(config).ToList();
+     select new LeftRight(l, r)).AsQueryable().ProjectTo<LeftRightResponseDto>(oneToOneAutoMapperConfig).ToList();
 
-foreach (var itemDto in resultResponseDto)
+Console.WriteLine();
+Console.WriteLine("Lambda version");
+foreach (var itemDto in lambdaOneToOneResultResponseDto)
 {
     Console.WriteLine(itemDto.Left?.Id);
     Console.WriteLine(itemDto.Left?.Title);
@@ -39,7 +30,9 @@ foreach (var itemDto in resultResponseDto)
     Console.WriteLine("-------------------");
 }
 
-foreach (var itemDto in linq)
+Console.WriteLine();
+Console.WriteLine("Linq version");
+foreach (var itemDto in linqOneToOneResultResponeDto)
 {
     Console.WriteLine(itemDto.Left?.Id);
     Console.WriteLine(itemDto.Left?.Title);
@@ -49,55 +42,9 @@ foreach (var itemDto in linq)
     Console.WriteLine("-------------------");
 }
 
-class Left
-{
-    public Left(long id, string? title)
-    {
-        Id = id;
-        Title = title;
-    }
+Console.WriteLine();
+Console.WriteLine("The end one to one mapping");
 
-    public long Id { get; set; }
-    public string? Title { get; set; }
-}
-
-class Right
-{
-    public Right(long leftId, string? name)
-    {
-        LeftId = leftId;
-        Name = name;
-    }
-
-    public long LeftId { get; set; }
-    public string? Name { get; set; }
-}
-
-class LeftRight
-{
-    public LeftRight(Left left, Right right)
-    {
-        Left = left;
-        Right = right;
-    }
-
-    public Left Left { get; set; }
-    public Right Right { get; set; }
-}
-
-class LeftResponseDto
-{
-    public long Id { get; set; }
-    public string? Title { get; set; }
-}
-
-class RightResponseDto
-{
-    public string? Name { get; set; }
-}
-
-class LeftRightResponseDto
-{
-    public LeftResponseDto? Left { get; set; }
-    public RightResponseDto? Right { get; set; }
-}
+Console.WriteLine();
+Console.WriteLine();
+Console.WriteLine();
