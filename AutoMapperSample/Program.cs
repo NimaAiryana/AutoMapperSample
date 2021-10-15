@@ -67,7 +67,8 @@ var linqOneToManyResultResponseDto =
     (from l in oneToManyLefts
      join r in oneToManyRights on l.Id equals r.LeftId
      // where ...
-     select r);
+     group new { l, r } by l into g
+     select new LeftRights(g.Key, g.Select(x => x.r).ToList())).AsQueryable().ProjectTo<LeftRightsResponseDto>(oneToManyAutoMapperConfig).ToList();
 
 Console.WriteLine();
 Console.WriteLine("Lambda version");
@@ -75,6 +76,8 @@ foreach (var itemDto in lambdaOneToManyResultResponseDto)
 {
     Console.WriteLine(itemDto.Left?.Id);
     Console.WriteLine(itemDto.Left?.Title);
+
+    if (itemDto.Rights is null) throw new NullReferenceException("The rights is null");
 
     foreach (var rightItem in itemDto.Rights)
     {
@@ -84,3 +87,23 @@ foreach (var itemDto in lambdaOneToManyResultResponseDto)
 
     Console.WriteLine("-------------------");
 }
+
+Console.WriteLine();
+Console.WriteLine("Linq version");
+foreach (var itemDto in linqOneToManyResultResponseDto)
+{
+    Console.WriteLine(itemDto.Left?.Id);
+    Console.WriteLine(itemDto.Left?.Title);
+
+    if (itemDto.Rights is null) throw new NullReferenceException("The rights is null");
+
+    foreach (var rightItem in itemDto.Rights)
+    {
+        Console.WriteLine($"    {rightItem.Id}");
+        Console.WriteLine($"    {rightItem.Name}");
+    }
+
+    Console.WriteLine("-------------------");
+}
+Console.WriteLine("The end one to many mapping");
+
