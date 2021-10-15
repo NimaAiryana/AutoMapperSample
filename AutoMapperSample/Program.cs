@@ -1,4 +1,6 @@
 ﻿using AutoMapper.QueryableExtensions;
+using AutoMapperSample.OneToManyMapping.Dto;
+using AutoMapperSample.OneToManyMapping.ReadModel;
 using AutoMapperSample.OneToOneMapping.Dto;
 using AutoMapperSample.OneToOneMapping.ReadModel;
 
@@ -15,7 +17,7 @@ var lambdaOneToOneResultResponseDto = oneToOneLefts.Join(oneToOneRights, l => l.
 var linqOneToOneResultResponeDto =
     (from l in oneToOneLefts
      join r in oneToOneRights on l.Id equals r.LeftId
-     // where ..
+     // where ...
      select new LeftRight(l, r)).AsQueryable().ProjectTo<LeftRightResponseDto>(oneToOneAutoMapperConfig).ToList();
 
 Console.WriteLine();
@@ -48,3 +50,37 @@ Console.WriteLine("The end one to one mapping");
 Console.WriteLine();
 Console.WriteLine();
 Console.WriteLine();
+
+
+Console.WriteLine("One to many mapping");
+
+var oneToManyLefts = AutoMapperSample.OneToManyMapping.Mocks.LeftEntityMock.GetLefts();
+var oneToManyRights = AutoMapperSample.OneToManyMapping.Mocks.RightEntityMock.GetRights();
+
+var oneToManyAutoMapperConfig = AutoMapperSample.OneToManyMapping.Configurations.AutoMapperConfiguration.GetMapperConfiguration();
+
+var lambdaOneToManyResultResponseDto = oneToManyLefts.Join(oneToManyRights, l => l.Id, r => r.LeftId,
+    (l, r) => new { l, r }).GroupBy(x => x.l).Select(x => new LeftRights(x.Key, x.Select(g => g.r).ToList()))
+    .AsQueryable().ProjectTo<LeftRightsResponseDto>(oneToManyAutoMapperConfig).ToList();
+
+var linqOneToManyResultResponseDto =
+    (from l in oneToManyLefts
+     join r in oneToManyRights on l.Id equals r.LeftId
+     // where ...
+     select r);
+
+Console.WriteLine();
+Console.WriteLine("Lambda version");
+foreach (var itemDto in lambdaOneToManyResultResponseDto)
+{
+    Console.WriteLine(itemDto.Left?.Id);
+    Console.WriteLine(itemDto.Left?.Title);
+
+    foreach (var rightItem in itemDto.Rights)
+    {
+        Console.WriteLine($"    {rightItem.Id}");
+        Console.WriteLine($"    {rightItem.Name}");
+    }
+
+    Console.WriteLine("-------------------");
+}
